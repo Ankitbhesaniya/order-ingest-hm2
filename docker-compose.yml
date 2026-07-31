@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  shard0:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: orders_shard0
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5432:5432"]
+    volumes: ["shard0_data:/var/lib/postgresql/data"]
+
+  shard1:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: orders_shard1
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5433:5432"]
+    volumes: ["shard1_data:/var/lib/postgresql/data"]
+
+  shard2:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: orders_shard2
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5434:5432"]
+    volumes: ["shard2_data:/var/lib/postgresql/data"]
+
+  shard3:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: orders_shard3
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5435:5432"]
+    volumes: ["shard3_data:/var/lib/postgresql/data"]
+
+  app:
+    build: .
+    ports: ["3000:3000"]
+    env_file: .env
+    environment:
+      SHARD_0_URL: postgres://postgres:postgres@shard0:5432/orders_shard0
+      SHARD_1_URL: postgres://postgres:postgres@shard1:5432/orders_shard1
+      SHARD_2_URL: postgres://postgres:postgres@shard2:5432/orders_shard2
+      SHARD_3_URL: postgres://postgres:postgres@shard3:5432/orders_shard3
+    volumes:
+      # Mount local ADC credentials into the container so GCS auth works
+      # the same way it does when running the app directly on your machine.
+      - ~/.config/gcloud:/root/.config/gcloud:ro
+    depends_on:
+      - shard0
+      - shard1
+      - shard2
+      - shard3
+
+volumes:
+  shard0_data:
+  shard1_data:
+  shard2_data:
+  shard3_data:
